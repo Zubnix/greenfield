@@ -111,6 +111,10 @@ export default class Pointer implements WlPointerRequests, SurfaceRole {
     }
   }
 
+  prepareViewRenderState(view: View): void {
+    view.scene.prepareViewRenderState(view)
+  }
+
   get grab() {
     return this._grab
   }

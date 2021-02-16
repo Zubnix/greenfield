@@ -542,7 +542,7 @@ class Surface implements WlSurfaceRequests {
       this.renderSource = undefined
       if (this.views.length > 0) {
         new Set(this.views.map(view => {
-          view.scene.prepareViewRenderState(view)
+          this.role?.prepareViewRenderState(view)
           return view.scene
         })).forEach(scene => {
           scene.registerFrameCallbacks(this.state.frameCallbacks)

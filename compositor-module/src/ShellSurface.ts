@@ -31,6 +31,7 @@ import Seat from './Seat'
 import Session from './Session'
 import Surface from './Surface'
 import { UserShellSurfaceRole } from './UserShellSurfaceRole'
+import View from './View'
 
 const {
   bottom,
@@ -120,6 +121,10 @@ export default class ShellSurface implements WlShellSurfaceRequests, UserShellSu
     this.wlSurfaceResource = wlSurfaceResource
     this._userSurfaceState = userSurfaceState
     this.session = session
+  }
+
+  prepareViewRenderState(view: View): void {
+    view.scene.prepareViewRenderState(view)
   }
 
   onCommit(surface: Surface) {

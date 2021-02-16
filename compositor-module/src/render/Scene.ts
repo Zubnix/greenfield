@@ -26,8 +26,9 @@ import Session from '../Session'
 import Size from '../Size'
 import Surface from '../Surface'
 import View from '../View'
-import WebGLFrame from '../webgl/WebGLFrame'
+import HTMLCanvasFrame from '../webgl/HTMLCanvasFrame'
 import WebShmFrame from '../webshm/WebShmFrame'
+import RenderState from './RenderState'
 import SceneShader from './SceneShader'
 import YUVAToRGBA from './YUVAToRGBA'
 
@@ -114,7 +115,7 @@ class Scene {
     view.applyTransformations()
     const { buffer, bufferContents } = view.surface.state
     if (bufferContents instanceof DecodedFrame
-      || bufferContents instanceof WebGLFrame
+      || bufferContents instanceof HTMLCanvasFrame
       || bufferContents instanceof WebShmFrame) {
 
       if (view.mapped && buffer && view.surface.damaged) {
@@ -190,19 +191,19 @@ class Scene {
     }
   }
 
-  private updateViewRenderStateWithTexImageSource(view: View, buffer: TexImageSource) {
-    const { texture, size: { w, h } } = view.renderState
+  private updateViewRenderState(renderState: RenderState, buffer: TexImageSource) {
+    const { texture, size: { w, h } } = renderState
     if (buffer.width === w && buffer.height === h) {
       texture.subImage2d(buffer, 0, 0)
     } else {
-      view.renderState.size = Size.create(buffer.width, buffer.height)
+      renderState.size = Size.create(buffer.width, buffer.height)
       texture.image2d(buffer)
     }
   }
 
   private renderView(view: View) {
     if (view.mapped) {
-      this.sceneShader.updateViewData(view)
+      this.sceneShader.updateShaderData(view.renderState, view.transformation)
       this.sceneShader.draw()
     }
   }
@@ -263,15 +264,15 @@ class Scene {
 
   public ['image/png'](decodedFrame: DecodedFrame, view: View) {
     const { bitmap } = decodedFrame.pixelContent as { bitmap: ImageBitmap, blob: Blob }
-    this.updateViewRenderStateWithTexImageSource(view, bitmap)
+    this.updateViewRenderState(view.renderState, bitmap)
   }
 
   public ['image/rgba'](shmFrame: WebShmFrame, view: View) {
-    this.updateViewRenderStateWithTexImageSource(view, shmFrame.pixelContent)
+    this.updateViewRenderState(view.renderState, shmFrame.pixelContent)
   }
 
-  public ['image/canvas'](webGLFrame: WebGLFrame, view: View) {
-    this.updateViewRenderStateWithTexImageSource(view, webGLFrame.pixelContent)
+  public ['image/canvas'](htmlCanvasFrame: HTMLCanvasFrame, view: View) {
+    this.updateViewRenderState(view.renderState, htmlCanvasFrame.pixelContent)
   }
 }
 

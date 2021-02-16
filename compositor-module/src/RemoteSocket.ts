@@ -21,6 +21,18 @@ import { CompositorRemoteSocket } from './index'
 import RemoteOutOfBandChannel from './RemoteOutOfBandChannel'
 import StreamingBuffer from './remotestreaming/StreamingBuffer'
 import Session from './Session'
+import { XWaylandConnection } from './xwayland/XWaylandConnection'
+import XWaylandShell from './xwayland/XWaylandShell'
+import { XWindowManager } from './xwayland/XWindowManager'
+
+type XWaylandConectionState = {
+  state: 'pending' | 'open',
+  xConnection?: XWaylandConnection,
+  wlClient?: Client,
+  xwm?: XWindowManager
+}
+
+const xWaylandConnections: { [key: string]: XWaylandConectionState } = {}
 
 class RemoteSocket implements CompositorRemoteSocket {
   private readonly _session: Session
@@ -33,6 +45,27 @@ class RemoteSocket implements CompositorRemoteSocket {
 
   private constructor(session: Session) {
     this._session = session
+  }
+
+  async ensureXWayland(appEndpointURL: URL) {
+    const xWaylandBaseURL = new URL(appEndpointURL.origin)
+    xWaylandBaseURL.searchParams.append('compositorSessionId', this._session.compositorSessionId)
+    const xWaylandBaseURLhref = xWaylandBaseURL.href
+
+    if (xWaylandConnections[xWaylandBaseURLhref] === undefined) {
+      xWaylandConnections[xWaylandBaseURLhref] = { state: 'pending', }
+      xWaylandBaseURL.searchParams.append('xwayland', 'connection')
+      const xWaylandConnectionEndpointURL = xWaylandBaseURL.href
+
+      // The backend might choose to (re)use a different websocket connection. The chosen xwayland websocket connection will receive an out-of-band opcode 7.
+      try {
+        const anyWaylandClientWebSocket = new WebSocket(xWaylandConnectionEndpointURL)
+        await this.onWebSocket(anyWaylandClientWebSocket)
+      } catch (e) {
+        delete xWaylandConnections[xWaylandBaseURLhref]
+        throw e
+      }
+    }
   }
 
   private async _getShmTransferable(webFD: WebFD): Promise<ArrayBuffer> {
@@ -215,6 +248,31 @@ class RemoteSocket implements CompositorRemoteSocket {
 
       const ids = new Uint32Array(outOfBandMessage.buffer, outOfBandMessage.byteOffset)
       client.recycledIds = Array.from(ids)
+    })
+
+    // listen for XWayland XWM connection request
+    outOfBandChannel.setListener(7, async outOfBandMessage => {
+      const wmFD = new Uint32Array(outOfBandMessage.buffer, outOfBandMessage.byteOffset)[0]
+
+      const xWaylandBaseURL = new URL(new URL(webSocket.url).origin)
+      xWaylandBaseURL.searchParams.append('compositorSessionId', this._session.compositorSessionId)
+      const xWaylandBaseURLhref = xWaylandBaseURL.href
+
+      const xWaylandConnection = xWaylandConnections[xWaylandBaseURLhref]
+      if (xWaylandConnection !== undefined) {
+        xWaylandConnection.state = 'open'
+        xWaylandConnection.wlClient = client
+        xWaylandBaseURL.searchParams.append('xwmFD', `${wmFD}`)
+        const xConnection = await XWaylandConnection.create(new WebSocket(xWaylandBaseURL.href))
+        client.onClose().then(() => xConnection.destroy())
+        xConnection.onDestroy().then(() => delete xWaylandConnections[xWaylandBaseURLhref])
+        xWaylandConnection.xConnection = xConnection
+        try {
+          xWaylandConnection.xwm = await XWindowManager.create(this._session, xConnection, client, XWaylandShell.create(this._session))
+        } catch (e) {
+          console.error('Failed to create X Window Manager.', e)
+        }
+      }
     })
   }
 

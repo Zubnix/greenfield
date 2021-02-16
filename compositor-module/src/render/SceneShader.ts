@@ -15,9 +15,11 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with Greenfield.  If not, see <https://www.gnu.org/licenses/>.
 
+import Mat4 from '../math/Mat4'
 import Size from "../Size";
 import View from "../View";
 import Program from './Program'
+import RenderState from './RenderState'
 import ShaderCompiler from './ShaderCompiler'
 import {FRAGMENT_ARGB8888, VERTEX_QUAD_TRANSFORM} from './ShaderSources'
 
@@ -130,15 +132,15 @@ class SceneShader {
     ])
   }
 
-  updateViewData(view: View) {
-    const {texture, size: {w, h}} = view.renderState
+  updateShaderData(renderState: RenderState, transformation: Mat4) {
+    const {texture, size: {w, h}} = renderState
 
     this.gl.uniform1i(this.shaderArgs.u_texture, 0)
 
     this.gl.activeTexture(this.gl.TEXTURE0)
     this.gl.bindTexture(this.gl.TEXTURE_2D, texture.texture)
 
-    this.program.setUniformM4(this.shaderArgs.u_transform, view.transformation.toArray())
+    this.program.setUniformM4(this.shaderArgs.u_transform, transformation.toArray())
 
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer)
     this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([

@@ -24,7 +24,8 @@
     "pino-pretty": "^4.1.0",
     "websocket-stream": "^5.5.2",
     "westfield-endpoint": "^0.4.4",
-    "ws": "^7.4.1"
+    "ws": "^7.4.1",
+    "xtsb": "link:../../xtsb"
   },
   "devDependencies": {
     "cmake-js": "^6.1.0",

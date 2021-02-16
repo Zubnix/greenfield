@@ -19,9 +19,9 @@ import { GrWebGlBufferResource, WlBufferResource } from 'westfield-runtime-serve
 import BufferImplementation from '../BufferImplementation'
 import Surface from '../Surface'
 import WebFS from '../WebFS'
-import WebGLFrame from './WebGLFrame'
+import HTMLCanvasFrame from './HTMLCanvasFrame'
 
-export default class WebGLBuffer implements BufferImplementation<WebGLFrame> {
+export default class WebGLBuffer implements BufferImplementation<HTMLCanvasFrame> {
   readonly resource: GrWebGlBufferResource
   readonly bufferResource: WlBufferResource
   private readonly _canvas: HTMLCanvasElement
@@ -59,8 +59,8 @@ export default class WebGLBuffer implements BufferImplementation<WebGLFrame> {
     // TODO what more to do here?
   }
 
-  getContents(surface: Surface, serial: number): WebGLFrame {
-    return WebGLFrame.create(this._canvas)
+  getContents(surface: Surface, serial: number): HTMLCanvasFrame {
+    return HTMLCanvasFrame.create(this._canvas)
   }
 
   release() {

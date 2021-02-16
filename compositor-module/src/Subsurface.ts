@@ -27,6 +27,7 @@ import Point from './math/Point'
 import Region from './Region'
 import Surface, { mergeSurfaceState, SurfaceState } from './Surface'
 import SurfaceRole from './SurfaceRole'
+import View from './View'
 
 /**
  *
@@ -129,6 +130,10 @@ export default class Subsurface implements WlSubsurfaceRequests, SurfaceRole {
   ) {
     const surface = this.wlSurfaceResource.implementation as Surface
     mergeSurfaceState(this.cachedState, surface.state)
+  }
+
+  prepareViewRenderState(view: View): void {
+    view.scene.prepareViewRenderState(view)
   }
 
   private commitCache(surface: Surface) {

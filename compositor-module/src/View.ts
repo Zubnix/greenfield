@@ -24,42 +24,33 @@ import Size from './Size'
 import Surface from './Surface'
 
 export default class View {
-  readonly surface: Surface
-  readonly scene: Scene
   readonly userTransformations: Map<string, Mat4> = new Map<string, Mat4>()
-
-  renderState: RenderState
   customTransformation?: Mat4
-  positionOffset: Point
-  destroyed: boolean
-  mapped: boolean
 
   private readonly _destroyPromise: Promise<void>
-  private _transformation: Mat4
-  private _inverseTransformation: Mat4
   // @ts-ignore
   private _destroyResolve: (value?: (PromiseLike<void> | void)) => void
   private _parent?: View
-  private _primary: boolean
 
   static create(surface: Surface, width: number, height: number, scene: Scene): View {
     const renderState = RenderState.create(scene.sceneShader.gl, Size.create(width, height))
-    return new View(surface, width, height, Mat4.IDENTITY(), scene, renderState)
+    return new View(scene, surface, renderState)
   }
 
-  private constructor(surface: Surface, width: number, height: number, transformation: Mat4, scene: Scene, renderState: RenderState) {
-    this.surface = surface
-    this.scene = scene
-    this.renderState = renderState
-    this.positionOffset = Point.create(0, 0)
-    this._transformation = transformation
-    this._inverseTransformation = transformation.invert()
+  private constructor(
+    public readonly scene: Scene,
+    public readonly surface: Surface,
+    public readonly renderState: RenderState,
+    public destroyed = false,
+    public mapped = true,
+    public positionOffset: Point = Point.create(0, 0),
+    private _transformation: Mat4 = Mat4.IDENTITY(),
+    private _inverseTransformation = Mat4.IDENTITY(),
+    private _primary = false
+  ) {
     this._destroyPromise = new Promise<void>(resolve => {
       this._destroyResolve = resolve
     })
-    this.destroyed = false
-    this._primary = false
-    this.mapped = true
   }
 
   set parent(parent: View | undefined) {

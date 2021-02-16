@@ -17,6 +17,8 @@
 
 'use strict'
 
+const AppEndpointSessionXWayland = require('./AppEndpointSessionXWayland')
+
 const Logger = require('pino')
 const logger = Logger({
   name: `app-endpoint-session-process`,
@@ -35,6 +37,7 @@ const SurfaceBufferEncoding = require('./SurfaceBufferEncoding')
 const NativeCompositorSession = require('./NativeCompositorSession')
 
 class AppEndpointSession {
+  appEndpointSessionXWayland
 
   /**
    * @param {string}compositorSessionId
@@ -47,7 +50,8 @@ class AppEndpointSession {
       level: (process.env.DEBUG && process.env.DEBUG == true) ? 20 : 30
     })
     const nativeCompositorSession = NativeCompositorSession.create(compositorSessionId)
-    const appEndpointSession = new AppEndpointSession(logger, nativeCompositorSession, compositorSessionId)
+    const appEndpointSessionXWayland = new AppEndpointSessionXWayland(logger, nativeCompositorSession, compositorSessionId)
+    const appEndpointSession = new AppEndpointSession(logger, nativeCompositorSession, compositorSessionId, appEndpointSessionXWayland)
     nativeCompositorSession.onDestroy().then(() => appEndpointSession.destroy())
     logger.info(`Session started.`)
     return appEndpointSession
@@ -57,8 +61,14 @@ class AppEndpointSession {
    * @param logger
    * @param {NativeCompositorSession}nativeCompositorSession
    * @param {string}compositorSessionId
+   * @param {AppEndpointSessionXWayland}appEndpointSessionXWayland
    */
-  constructor (logger, nativeCompositorSession, compositorSessionId) {
+  constructor (logger, nativeCompositorSession, compositorSessionId, appEndpointSessionXWayland) {
+    /**
+     * @type {AppEndpointSessionXWayland}
+     * @private
+     */
+    this._appEndpointSessionXWayland = appEndpointSessionXWayland
     /**
      * @private
      */
@@ -93,6 +103,7 @@ class AppEndpointSession {
 
   destroy () {
     this._logger.info(`Session destroyed.`)
+    this._appEndpointSessionXWayland.destroy()
     this._destroyResolve()
   }
 
@@ -103,6 +114,31 @@ class AppEndpointSession {
   async createWlConnection (webSocket, query) {
     const clientId = Number.parseInt(query['clientId'])
     this._nativeCompositorSession.socketForClient(webSocket, clientId)
+  }
+
+  /**
+   * @param {WebSocket}webSocket
+   * @param {ParsedUrlQuery}query
+   * @private
+   */
+  async createXWMConnection (webSocket, query) {
+    const wmFD = Number.parseInt(query['xwmFD'])
+    if (sessionConfig.xWayland) {
+      await this._appEndpointSessionXWayland.createXWMConnection(webSocket, wmFD)
+    } else {
+      webSocket.close(4501, `[app-endpoint-session: ${this.compositorSessionId}] - XWayland not enabled.`)
+    }
+  }
+
+  /**
+   * @param {WebSocket}webSocket
+   */
+  async createXConnection (webSocket) {
+    if (sessionConfig.xWayland) {
+      await this._appEndpointSessionXWayland.createXConnection(webSocket)
+    } else {
+      webSocket.close(4501, `[app-endpoint-session: ${this.compositorSessionId}] - XWayland not enabled.`)
+    }
   }
 
   /**
@@ -174,6 +210,10 @@ class AppEndpointSession {
       this._logger.debug(`New web socket open.`)
       if (query['clientId']) {
         this.createWlConnection(webSocket, query)
+      } else if (query['xwayland'] === 'connection') {
+        this.createXConnection(webSocket)
+      } else if (query['xwmFD']) {
+        this.createXWMConnection(webSocket, query)
       } else if (query['launch']) {
         this.launchNativeApplication(webSocket, query)
       } else if (query['fd']) {

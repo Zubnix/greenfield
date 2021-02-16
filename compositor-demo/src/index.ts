@@ -112,6 +112,8 @@ async function main() {
   remoteKwriteURLButton.textContent = 'KWrite'
   const remoteGnomeTerminalURLButton: HTMLButtonElement = document.createElement('button')
   remoteGnomeTerminalURLButton.textContent = 'Gnome-Terminal'
+  const remoteXtermURLButton: HTMLButtonElement = document.createElement('button')
+  remoteXtermURLButton.textContent = 'XTerm'
 
   const urlInput: HTMLInputElement = document.createElement('input')
   urlInput.type = 'text'
@@ -126,6 +128,7 @@ async function main() {
   container.appendChild(remoteGtk3URLButton)
   container.appendChild(remoteKwriteURLButton)
   container.appendChild(remoteGnomeTerminalURLButton)
+  container.appendChild(remoteXtermURLButton)
   container.appendChild(urlInput)
   container.appendChild(launchButton)
 
@@ -135,6 +138,7 @@ async function main() {
   remoteGtk3URLButton.onclick = () => urlInput.value = `wss://app-endpoint.greenfield.app?launch=remote-gtk3-demo`
   remoteKwriteURLButton.onclick = () => urlInput.value = `ws://localhost:8081?launch=remote-kwrite`
   remoteGnomeTerminalURLButton.onclick = () => urlInput.value = `ws://localhost:8081?launch=remote-gnome-terminal`
+  remoteXtermURLButton.onclick = () => urlInput.value = `ws://localhost:8081?launch=remote-xterm`
 
   launchButton.onclick = () => {
     const urlString = urlInput.value

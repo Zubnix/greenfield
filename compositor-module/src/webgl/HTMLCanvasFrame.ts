@@ -18,13 +18,13 @@
 import BufferContents from '../BufferContents'
 import Size from '../Size'
 
-export default class WebGLFrame implements BufferContents<HTMLCanvasElement> {
+export default class HTMLCanvasFrame implements BufferContents<HTMLCanvasElement> {
   readonly pixelContent: HTMLCanvasElement
   readonly mimeType: 'image/canvas' = 'image/canvas'
   size: Size
 
-  static create(canvas: HTMLCanvasElement): WebGLFrame {
-    return new WebGLFrame(canvas, Size.create(canvas.width, canvas.height))
+  static create(canvas: HTMLCanvasElement): HTMLCanvasFrame {
+    return new HTMLCanvasFrame(canvas, Size.create(canvas.width, canvas.height))
   }
 
   private constructor(canvas: HTMLCanvasElement, size: Size) {

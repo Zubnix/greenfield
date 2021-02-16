@@ -29,6 +29,7 @@ import Point from './math/Point'
 import Seat from './Seat'
 import Surface from './Surface'
 import SurfaceRole from './SurfaceRole'
+import View from './View'
 import { XdgPositionerState } from './XdgPositioner'
 import XdgSurface from './XdgSurface'
 
@@ -198,6 +199,10 @@ export default class XdgPopup implements XdgPopupRequests, SurfaceRole {
     this.parent = parent
     this.positionerState = positionerState
     this._seat = seat
+  }
+
+  prepareViewRenderState(view: View): void {
+    view.scene.prepareViewRenderState(view)
   }
 
   onCommit(surface: Surface) {
