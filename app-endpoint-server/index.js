@@ -20,8 +20,6 @@
 'use strict'
 
 const Logger = require('pino')
-
-require('json5/lib/register')
 const AppEndpointServer = require('./src/AppEndpointServer')
 
 function main () {

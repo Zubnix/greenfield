@@ -16,7 +16,7 @@
 // along with Greenfield.  If not, see <https://www.gnu.org/licenses/>.
 
 'use strict'
-
+require('json5/lib/register')
 const Logger = require('pino')
 
 const childProcess = require('child_process')
@@ -51,9 +51,15 @@ class AppEndpointServer {
     const { timeout, hostname, port } = serverConfig.httpServer
     server.setTimeout(timeout)
     const appEndpointDaemon = new AppEndpointServer(logger)
+    appEndpointDaemon.onDestroy().then(() => {
+      server.close()
+    })
     // TODO configure server to only accept websocket connections
     // FIXME add (websocket) cookie based auth, example: https://github.com/crossbario/autobahn-python/tree/master/examples/twisted/websocket/auth_persona
-    server.on('upgrade', (request, socket, head) => appEndpointDaemon.handleHttpUpgradeRequest(request, socket, head))
+    server.on('upgrade', (request, socket, head) => {
+      appEndpointDaemon.handleHttpUpgradeRequest(request, socket, head)
+      appEndpointDaemon.onDestroy().then(() => socket.destroy())
+    })
     server.listen(port, hostname)
     logger.info(`Listening on ${hostname}:${port}.`)
 
