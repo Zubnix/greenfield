@@ -37,7 +37,6 @@ export default class RemoteAppLauncher implements CompositorRemoteAppLauncher {
     appEndpointURL.searchParams.delete('compositorSessionId')
     appEndpointURL.searchParams.append('compositorSessionId', this.session.compositorSessionId)
 
-    // make sure we listen for X connections in case the remote app is an X client
     const webSocket = new WebSocket(appEndpointURL.href)
     return this.remoteSocket.onWebSocket(webSocket)
   }

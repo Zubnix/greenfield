@@ -62,8 +62,6 @@ export interface UserShellApiActions {
 
   refreshScene(sceneId: string): Promise<void>
 
-  setSceneConfiguration(sceneId: string, sceneConfig: { width: number; height: number }): void
-
   destroyScene(sceneId: string): void
 
   createView(compositorSurface: CompositorSurface, sceneId: string): void
@@ -126,9 +124,6 @@ export function createUserShellApi(session: Session): UserShellApi {
       refreshScene: (sceneId) => {
         session.renderer.scenes[sceneId].prepareAllViewRenderState()
         return session.renderer.scenes[sceneId].render()
-      },
-      setSceneConfiguration: (sceneId, sceneConfig) => {
-        session.renderer.scenes[sceneId].updateResolution(sceneConfig.width, sceneConfig.height)
       },
       destroyScene: (sceneId) => session.renderer.scenes[sceneId].destroy(),
       createView: (compositorSurface, sceneId) => {

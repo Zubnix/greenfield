@@ -91,24 +91,11 @@ class Scene {
     public readonly yuvaToRGBA: YUVAToRGBA,
     public readonly output: Output,
     public readonly id: string,
-    public resolution: Size | 'auto' = 'auto',
     public topLevelViews: View[] = [],
   ) {
     this._destroyPromise = new Promise<void>((resolve) => {
       this._destroyResolve = resolve
     })
-  }
-
-  private ensureResolution() {
-    if (this.resolution === 'auto') {
-      if (this.canvas.width !== this.canvas.clientWidth || this.canvas.height !== this.canvas.clientHeight) {
-        this.canvas.width = this.canvas.clientWidth
-        this.canvas.height = this.canvas.clientHeight
-      }
-    } else if (this.canvas.width !== this.resolution.w || this.canvas.height !== this.resolution.h) {
-      this.canvas.width = this.resolution.w
-      this.canvas.height = this.resolution.h
-    }
   }
 
   hidePointer(): void {
@@ -173,7 +160,6 @@ class Scene {
   }
 
   private renderNow() {
-    this.ensureResolution()
     const viewStack = this.viewStack()
 
     // render view texture
@@ -238,14 +224,6 @@ class Scene {
 
   onDestroy(): Promise<void> {
     return this._destroyPromise
-  }
-
-  updateResolution(width: number, height: number): void {
-    if (this.resolution instanceof Size && (this.resolution.w !== width || this.resolution.h !== height)) {
-      this.resolution = Size.create(width, height)
-      this.render()
-      this.output.resources.forEach((resource) => this.output.emitSpecs(resource))
-    }
   }
 
   /**
